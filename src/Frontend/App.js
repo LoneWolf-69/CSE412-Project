@@ -1,24 +1,36 @@
-import logo from '../logo.svg';
-import '../App.css';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import './App.css';
+import FlightSearch from './FlightSearch';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="App">
+        <header className="App-header">
+          <h1>Welcome to Flight Booking System</h1>
+          <p>
+            Book flights effortlessly and manage your journeys with ease.
+          </p>
+          <div className="buttons">
+            <Link to="/search-flights" className="btn">
+              Search Flights
+            </Link>
+            <Link to="/manage-bookings" className="btn">
+              Manage Bookings
+            </Link>
+            <Link to="/contact-support" className="btn">
+              Contact Support
+            </Link>
+          </div>
+        </header>
+
+        <Routes>
+          <Route path="/search-flights" element={<FlightSearch />} />
+          {/* Add other routes as needed */}
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
