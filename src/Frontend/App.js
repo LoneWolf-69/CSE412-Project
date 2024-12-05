@@ -11,6 +11,7 @@ function App() {
         <Route path="/" element={<Navigate to="/login" replace={true} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/flights" element={<FlightSearch />} />
       </Routes>
     </Router>
   );

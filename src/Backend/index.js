@@ -56,8 +56,62 @@ app.get("/api/users", async (req, res) => {
   }
 });
 
-// Start the server
+
+app.get('/api/airports', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM airport ORDER BY airportname');
+    console.log('Airports fetched:', result.rows);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching airports:', err);
+    res.status(500).json({ error: 'Error retrieving airports' });
+  }
+});
+
+app.get('/api/flights', async (req, res) => {
+  const { from, to, departDate } = req.query;
+
+  console.log('Received flight search parameters:', { from, to, departDate });
+
+  const flightQuery = `
+    SELECT 
+      f.flightid, 
+      f.flightnumber, 
+      f.departuredatetime, 
+      f.arrivaldatetime, 
+      f.price,
+      f.aircrafttype,
+      da.airportname AS departure_airport,
+      da.airportcode AS departure_code, 
+      aa.airportname AS arrival_airport,
+      aa.airportcode AS arrival_code,
+      al.airlinename AS airline_name
+    FROM flight f
+    INNER JOIN airport da ON f.departureairport = da.airportid
+    INNER JOIN airport aa ON f.arrivalairport = aa.airportid
+    INNER JOIN airline al ON f.airlineid = al.airlineid
+    WHERE da.airportcode = $1 
+    AND aa.airportcode = $2 
+    AND DATE(f.departuredatetime) = $3::date
+  `;
+
+  try {
+    console.log('Executing flight query with parameters:', { from, to, departDate });
+    const flightResult = await pool.query(flightQuery, [from.toUpperCase(), to.toUpperCase(), departDate]);
+    console.log('Flight query result:', flightResult.rows);
+
+    res.json({
+      flights: flightResult.rows,
+      count: flightResult.rows.length
+    });
+  } catch (err) {
+    console.error('Database Error:', err);
+    res.status(500).json({ error: 'Error retrieving flights' });
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
