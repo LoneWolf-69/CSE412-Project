@@ -1,49 +1,116 @@
-.dashboard {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-  }
-  
-  .dashboard-nav {
-    display: flex;
-    justify-content: space-around;
-    margin-bottom: 20px;
-  }
-  
-  .dashboard-nav button {
-    padding: 10px 20px;
-    border: none;
-    background-color: #f0f0f0;
-    cursor: pointer;
-  }
-  
-  .dashboard-nav button.active {
-    background-color: #007bff;
-    color: white;
-  }
-  
-  .dashboard-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
-  }
-  
-  .booking-item {
-    border: 1px solid #ddd;
-    padding: 10px;
-    margin-bottom: 10px;
-    border-radius: 5px;
-  }
-  
-  .back-to-search {
-    display: inline-block;
-    margin-top: 20px;
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 5px;
-  }
-  
-  
+.itinerary {
+  padding: 20px;
+}
+
+.no-itineraries {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.search-flights-btn {
+  margin-top: 20px;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.search-flights-btn:hover {
+  background-color: #0056b3;
+}
+
+.itineraries-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.itinerary-item {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  padding: 20px;
+}
+
+.itinerary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.itinerary-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.status-badge {
+  padding: 4px 8px;
+  border-radius: 4px;
+  background-color: #e3f2fd;
+  color: #1976d2;
+  font-size: 0.875rem;
+}
+
+.flight-info {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.departure, .arrival {
+  text-align: center;
+}
+
+.airport-code {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.airport-name {
+  color: #666;
+  margin: 5px 0;
+}
+
+.time {
+  color: #333;
+  font-size: 0.9rem;
+}
+
+.flight-duration {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.arrow {
+  font-size: 1.5rem;
+}
+
+.travel-details {
+  border-top: 1px solid #eee;
+  padding-top: 15px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.travel-details p {
+  margin: 5px 0;
+}
+
+.error-message {
+  color: #dc3545;
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  border-radius: 4px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+

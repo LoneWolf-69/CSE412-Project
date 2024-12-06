@@ -37,7 +37,7 @@ function Login() {
       setSuccess("Login successful! Redirecting...");
       setError("");
 
-      setTimeout(() => navigate("/flights"), 2000); // Simulate redirect
+      setTimeout(() => navigate("/Dashboard"), 2000); // Simulate redirect
     } catch (err) {
       console.error(err);
       setError("Invalid email or password.");

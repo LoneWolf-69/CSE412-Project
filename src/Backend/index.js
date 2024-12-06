@@ -115,48 +115,7 @@ app.get('/api/flights', async (req, res) => {
   }
 });
 
-// New route for creating a booking
-app.post("/api/bookings", async (req, res) => {
-  const { userId, flightId, numberOfPassengers } = req.body;
-  console.log('Received booking request:', { userId, flightId, numberOfPassengers });
-  
-  try {
-    // Check if the flight exists and has available seats
-    const flightCheck = await pool.query(
-      "SELECT availableseats FROM flight WHERE flightid = $1",
-      [flightId]
-    );
-    
-    if (flightCheck.rows.length === 0) {
-      return res.status(404).json({ error: "Flight not found" });
-    }
-    
-    if (flightCheck.rows[0].availableseats < numberOfPassengers) {
-      return res.status(400).json({ error: "Not enough available seats" });
-    }
 
-    // Create the booking with explicit column names matching database schema
-    const result = await pool.query(
-      `INSERT INTO booking 
-       (userid, flightid, bookingdate, bookingstatus, numberofpassengers) 
-       VALUES ($1, $2, CURRENT_DATE, 'Confirmed', $3) 
-       RETURNING *`,
-      [userId, flightId, numberOfPassengers]
-    );
-
-    // Update available seats
-    await pool.query(
-      "UPDATE flight SET availableseats = availableseats - $1 WHERE flightid = $2",
-      [numberOfPassengers, flightId]
-    );
-
-    console.log('Booking created:', result.rows[0]);
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('Error creating booking:', err);
-    res.status(500).json({ error: "Booking failed: " + err.message });
-  }
-});
 // New route for getting user bookings
 app.get("/api/bookings/:userId", async (req, res) => {
   const { userId } = req.params;
@@ -193,6 +152,121 @@ app.get("/api/users/:userId", async (req, res) => {
     res.status(500).json({ error: "Failed to retrieve user profile" });
   }
 });
+
+// Update the booking creation route to include itinerary creation
+app.post("/api/bookings", async (req, res) => {
+  const { userId, flightId, numberOfPassengers } = req.body;
+  const client = await pool.connect();
+  
+  try {
+    await client.query('BEGIN');
+    
+    // Check flight availability
+    const flightCheck = await client.query(
+      "SELECT availableseats, departuredatetime, arrivaldatetime FROM flight WHERE flightid = $1",
+      [flightId]
+    );
+    
+    if (flightCheck.rows.length === 0) {
+      throw new Error("Flight not found");
+    }
+    
+    if (flightCheck.rows[0].availableseats < numberOfPassengers) {
+      throw new Error("Not enough available seats");
+    }
+
+    // Create the booking
+    const bookingResult = await client.query(
+      `INSERT INTO booking 
+       (userid, flightid, bookingdate, bookingstatus, numberofpassengers) 
+       VALUES ($1, $2, CURRENT_DATE, 'Confirmed', $3) 
+       RETURNING bookingid`,
+      [userId, flightId, numberOfPassengers]
+    );
+
+    const bookingId = bookingResult.rows[0].bookingid;
+
+    // Create itinerary
+    const itineraryResult = await client.query(
+      `INSERT INTO itinerary 
+       (bookingid, flightid, departuredatetime, arrivaldatetime, seatnumber, gatenumber, baggageinfo) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7) 
+       RETURNING *`,
+      [
+        bookingId,
+        flightId,
+        flightCheck.rows[0].departuredatetime,
+        flightCheck.rows[0].arrivaldatetime,
+        'Auto-assigned', // You can implement seat assignment logic here
+        'TBD',          // Gate number can be updated later
+        'Standard baggage allowance'
+      ]
+    );
+
+    // Update available seats
+    await client.query(
+      "UPDATE flight SET availableseats = availableseats - $1 WHERE flightid = $2",
+      [numberOfPassengers, flightId]
+    );
+
+    await client.query('COMMIT');
+    
+    res.status(201).json({
+      booking: bookingResult.rows[0],
+      itinerary: itineraryResult.rows[0]
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Error creating booking and itinerary:', err);
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+app.get("/api/itineraries/:userId", async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    console.log("Fetching itineraries for userId:", userId);
+
+    const query = `
+      SELECT 
+        i.itineraryid,
+        i.seatnumber,
+        i.gatenumber,
+        i.baggageinfo,
+        i.departuredatetime,
+        i.arrivaldatetime,
+        f.flightnumber,
+        da.airportname AS departureairport,
+        da.airportcode AS departurecode,
+        aa.airportname AS arrivalairport,
+        aa.airportcode AS arrivalcode,
+        al.airlinename,
+        b.bookingstatus
+      FROM itinerary i
+      JOIN booking b ON i.bookingid = b.bookingid
+      JOIN flight f ON i.flightid = f.flightid
+      JOIN airport da ON f.departureairport = da.airportid
+      JOIN airport aa ON f.arrivalairport = aa.airportid
+      JOIN airline al ON f.airlineid = al.airlineid
+      WHERE b.userid = $1
+      ORDER BY i.departuredatetime DESC;
+    `;
+
+    console.log("Executing query:", query);
+    const result = await pool.query(query, [userId]);
+
+    console.log("Itineraries fetched:", result.rows);
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error("Failed to fetch itineraries:", err);
+    res.status(500).json({ error: "Failed to fetch itineraries" });
+  }
+});
+
+
+
 
 const PORT = process.env.PORT || 5001;
 app.listen(PORT, () => {
