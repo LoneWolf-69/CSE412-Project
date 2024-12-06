@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './FlightSearch.css';
 
@@ -16,6 +17,7 @@ function FlightSearch() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchAirports = async () => {
@@ -66,6 +68,22 @@ function FlightSearch() {
     }
   };
 
+// In FlightSearch.js
+const handleBooking = (flight) => {
+  navigate('/booking', { 
+    state: { 
+      flightDetails: {
+        flightid: flight.flightid, // Added this line
+        flightNumber: flight.flightnumber,
+        departureCode: flight.departure_code,
+        arrivalCode: flight.arrival_code,
+        departureTime: flight.departuredatetime,
+        arrivalTime: flight.arrivaldatetime,
+        price: flight.price,
+      }
+    } 
+  });
+};
   return (
     <div className="flight-search-container">
       <div className="flight-search-header">
@@ -186,7 +204,7 @@ function FlightSearch() {
                 </div>
                 <div className="flight-price">
                   <span className="price-amount">${flight.price}</span>
-                  <button className="book-button">Select</button>
+                  <button className="book-button" onClick={() => handleBooking(flight)}>Select</button>
                 </div>
               </div>
             </div>

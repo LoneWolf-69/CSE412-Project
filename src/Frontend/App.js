@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-d
 import Register from "./Auth/Register";
 import Login from "./Auth/Login";
 import FlightSearch from "./Flights/FlightSearch";
+import BookingScreen from "./Bookings/BookingScreen";
+import Dashboard from "./Dashboard";
 
 function App() {
   return (
@@ -12,6 +14,8 @@ function App() {
         <Route path="/register" element={<Register />} />
         <Route path="/login" element={<Login />} />
         <Route path="/flights" element={<FlightSearch />} />
+        <Route path="/booking" element={<BookingScreen />} />
+        <Route path="/dashboard" element={<Dashboard />} />
       </Routes>
     </Router>
   );

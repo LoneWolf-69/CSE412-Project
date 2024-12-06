@@ -32,6 +32,8 @@ function Login() {
         password: credentials.Password,
       });
 
+      localStorage.setItem('userId', response.data.userId);
+
       setSuccess("Login successful! Redirecting...");
       setError("");
 

@@ -26,6 +26,7 @@ app.post("/api/register", async (req, res) => {
   });
 
 // 2. User login
+// In index.js
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
   try {
@@ -35,7 +36,11 @@ app.post("/api/login", async (req, res) => {
     );
 
     if (result.rows.length > 0) {
-      res.status(200).json({ message: "Login successful", user: result.rows[0] });
+      // Return userId in the response
+      res.status(200).json({ 
+        message: "Login successful", 
+        userId: result.rows[0].userid // Ensure the field name matches your database
+      });
     } else {
       res.status(401).json({ error: "Invalid email or password" });
     }
@@ -107,6 +112,85 @@ app.get('/api/flights', async (req, res) => {
   } catch (err) {
     console.error('Database Error:', err);
     res.status(500).json({ error: 'Error retrieving flights' });
+  }
+});
+
+// New route for creating a booking
+app.post("/api/bookings", async (req, res) => {
+  const { userId, flightId, numberOfPassengers } = req.body;
+  console.log('Received booking request:', { userId, flightId, numberOfPassengers });
+  
+  try {
+    // Check if the flight exists and has available seats
+    const flightCheck = await pool.query(
+      "SELECT availableseats FROM flight WHERE flightid = $1",
+      [flightId]
+    );
+    
+    if (flightCheck.rows.length === 0) {
+      return res.status(404).json({ error: "Flight not found" });
+    }
+    
+    if (flightCheck.rows[0].availableseats < numberOfPassengers) {
+      return res.status(400).json({ error: "Not enough available seats" });
+    }
+
+    // Create the booking with explicit column names matching database schema
+    const result = await pool.query(
+      `INSERT INTO booking 
+       (userid, flightid, bookingdate, bookingstatus, numberofpassengers) 
+       VALUES ($1, $2, CURRENT_DATE, 'Confirmed', $3) 
+       RETURNING *`,
+      [userId, flightId, numberOfPassengers]
+    );
+
+    // Update available seats
+    await pool.query(
+      "UPDATE flight SET availableseats = availableseats - $1 WHERE flightid = $2",
+      [numberOfPassengers, flightId]
+    );
+
+    console.log('Booking created:', result.rows[0]);
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('Error creating booking:', err);
+    res.status(500).json({ error: "Booking failed: " + err.message });
+  }
+});
+// New route for getting user bookings
+app.get("/api/bookings/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await pool.query(
+      `SELECT b.*, f.FlightNumber, f.DepartureDateTime, f.ArrivalDateTime, 
+              da.AirportName AS DepartureAirport, aa.AirportName AS ArrivalAirport
+       FROM Booking b
+       JOIN Flight f ON b.FlightID = f.FlightID
+       JOIN Airport da ON f.DepartureAirport = da.AirportID
+       JOIN Airport aa ON f.ArrivalAirport = aa.AirportID
+       WHERE b.UserID = $1`,
+      [userId]
+    );
+    res.status(200).json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Failed to retrieve bookings" });
+  }
+});
+
+// New route for getting user profile
+app.get("/api/users/:userId", async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const result = await pool.query("SELECT * FROM Users WHERE UserID = $1", [userId]);
+    if (result.rows.length > 0) {
+      res.status(200).json(result.rows[0]);
+    } else {
+      res.status(404).json({ error: "User not found" });
+    }
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).json({ error: "Failed to retrieve user profile" });
   }
 });
 
