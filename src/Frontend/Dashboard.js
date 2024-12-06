@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { Plane, Calendar, Clock, MapPin, CreditCard, Package } from 'lucide-react';
 import './Dashboard.css';
 
 function Dashboard() {
@@ -29,6 +30,11 @@ function Dashboard() {
       console.error('Failed to fetch user profile', error);
       setError('Failed to fetch user profile');
     }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('userId');
+    navigate('/login');
   };
 
   const fetchUserBookings = async (userId) => {
@@ -66,6 +72,13 @@ function Dashboard() {
     });
   };
 
+  const calculateDuration = (departure, arrival) => {
+    const diff = new Date(arrival) - new Date(departure);
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    return `${hours}h ${minutes}m`;
+  };
+
   return (
     <div className="dashboard">
       <nav className="dashboard-nav">
@@ -92,7 +105,14 @@ function Dashboard() {
           className="flight-search-button"
         >
           Flight Search
-        </button>
+          </button>
+        <button 
+          onClick={handleLogout}
+          className="logout-button"
+        >
+          Logout
+  </button>
+
       </nav>
 
       <div className="dashboard-content">
@@ -151,7 +171,9 @@ function Dashboard() {
                   <div key={itinerary.itineraryid} className="itinerary-item">
                     <div className="itinerary-header">
                       <h3>{itinerary.airlinename} - Flight {itinerary.flightnumber}</h3>
-                      <span className="status-badge">{itinerary.bookingstatus}</span>
+                      <span className={`status-badge ${itinerary.bookingstatus.toLowerCase()}`}>
+                        {itinerary.bookingstatus}
+                      </span>
                     </div>
                     <div className="itinerary-details">
                       <div className="flight-info">
@@ -162,6 +184,9 @@ function Dashboard() {
                         </div>
                         <div className="flight-duration">
                           <span className="arrow">→</span>
+                          <span className="duration-time">
+                            {calculateDuration(itinerary.departuredatetime, itinerary.arrivaldatetime)}
+                          </span>
                         </div>
                         <div className="arrival">
                           <p className="airport-code">{itinerary.arrivalcode}</p>
@@ -170,9 +195,18 @@ function Dashboard() {
                         </div>
                       </div>
                       <div className="travel-details">
-                        <p><strong>Seat:</strong> {itinerary.seatnumber}</p>
-                        <p><strong>Gate:</strong> {itinerary.gatenumber}</p>
-                        <p><strong>Baggage:</strong> {itinerary.baggageinfo}</p>
+                        <p>
+                          <strong><Plane size={16} /> Seat</strong>
+                          {itinerary.seatnumber}
+                        </p>
+                        <p>
+                          <strong><MapPin size={16} /> Gate</strong>
+                          {itinerary.gatenumber}
+                        </p>
+                        <p>
+                          <strong><Package size={16} /> Baggage</strong>
+                          {itinerary.baggageinfo}
+                        </p>
                       </div>
                     </div>
                   </div>
